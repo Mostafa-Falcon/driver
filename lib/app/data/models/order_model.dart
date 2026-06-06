@@ -23,6 +23,8 @@ class OrderModel {
     this.notes,
     this.audioNote,
     this.attachments,
+    this.pickupPhotoUrl,
+    this.deliveryPhotoUrl,
     this.rejectedByDrivers,
     this.author,
     this.driver,
@@ -54,6 +56,11 @@ class OrderModel {
         notes: json['notes'] as String?,
         audioNote: json['audio_note'] as String?,
         attachments: json['attachments'] as List<dynamic>?,
+        pickupPhotoUrl:
+            _stringFromAny(json['pickup_photo_url'] ?? json['pickupPhotoUrl']),
+        deliveryPhotoUrl: _stringFromAny(
+          json['delivery_photo_url'] ?? json['deliveryPhotoUrl'],
+        ),
         rejectedByDrivers: json['rejectedByDrivers'] as List<dynamic>?,
         author: json['author'] != null
             ? UserModel.fromJson(json['author'] as Map<String, dynamic>)
@@ -87,6 +94,8 @@ class OrderModel {
   String? notes;
   String? audioNote;
   List<dynamic>? attachments;
+  String? pickupPhotoUrl;
+  String? deliveryPhotoUrl;
   List<dynamic>? rejectedByDrivers;
 
   // ── البيانات المضمنة ──────────────────────────────────────
@@ -118,6 +127,12 @@ class OrderModel {
 
   bool get hasAttachments => attachments != null && attachments!.isNotEmpty;
 
+  bool get hasPickupPhoto =>
+      pickupPhotoUrl != null && pickupPhotoUrl!.trim().isNotEmpty;
+
+  bool get hasDeliveryPhoto =>
+      deliveryPhotoUrl != null && deliveryPhotoUrl!.trim().isNotEmpty;
+
   Map<String, dynamic> toJson() => {
         'id': id,
         'status': status,
@@ -137,8 +152,16 @@ class OrderModel {
         'notes': notes,
         'audio_note': audioNote,
         'attachments': attachments ?? [],
+        'pickup_photo_url': pickupPhotoUrl,
+        'delivery_photo_url': deliveryPhotoUrl,
         'rejectedByDrivers': rejectedByDrivers ?? [],
         if (author != null) 'author': author!.toJson(),
         if (driver != null) 'driver': driver!.toJson(),
       };
+}
+
+String? _stringFromAny(dynamic value) {
+  if (value == null) return null;
+  final text = value.toString().trim();
+  return text.isEmpty ? null : text;
 }

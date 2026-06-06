@@ -48,6 +48,9 @@ class AppConstants {
   static const String eventCompleted = 'completed';
   static const String eventCancelled = 'cancelled';
 
+  // ── Driver Wallet Rules ───────────────────────────────────
+  static const double defaultDriverAppCommission = 20.0;
+
   // ── Wallet Transaction Types ──────────────────────────────
   static const String walletTopup = 'topup';
   static const String walletWithdrawal = 'withdrawal';

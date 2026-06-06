@@ -7,11 +7,13 @@ class SupportRepository {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   static const List<String> defaultReasons = [
-    'مشكلة في الطلب',
-    'مشكلة في التطبيق',
-    'مشكلة في المحفظة',
-    'طلب تعديل البيانات',
-    'الإبلاغ عن عميل',
+    'استفسار عام',
+    'شكاوى',
+    'مشاكل تقنية',
+    'حالات طارئة',
+    'مشاكل في الدفع',
+    'شحن المحفظة',
+    'العميل لم يدفع',
     'أخرى',
   ];
 

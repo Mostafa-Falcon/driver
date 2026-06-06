@@ -27,6 +27,13 @@ class UserModel {
     this.orderRequestData,
     this.reviewsCount,
     this.reviewsSum,
+    this.totalOrders,
+    this.acceptedOrders,
+    this.cancelledOrders,
+    this.acceptanceRateValue,
+    this.cancellationRateValue,
+    this.driverLicenseNumber,
+    this.vehicleLicenseNumber,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
@@ -62,6 +69,39 @@ class UserModel {
         orderRequestData: (json['orderRequestData'] as List<dynamic>?) ?? [],
         reviewsCount: ((json['reviewsCount']) ?? '0').toString(),
         reviewsSum: ((json['reviewsSum']) ?? '0').toString(),
+        totalOrders: _numFromAny(
+          json['totalOrders'] ?? json['total_orders'] ?? json['orders_count'],
+        ),
+        acceptedOrders: _numFromAny(
+          json['acceptedOrders'] ??
+              json['accepted_orders'] ??
+              json['completed_orders'],
+        ),
+        cancelledOrders: _numFromAny(
+          json['cancelledOrders'] ??
+              json['canceledOrders'] ??
+              json['cancelled_orders'] ??
+              json['canceled_orders'],
+        ),
+        acceptanceRateValue: _numFromAny(
+          json['acceptanceRate'] ?? json['acceptance_rate'],
+        ),
+        cancellationRateValue: _numFromAny(
+          json['cancellationRate'] ??
+              json['cancelationRate'] ??
+              json['cancellation_rate'] ??
+              json['cancelation_rate'],
+        ),
+        driverLicenseNumber: _stringFromAny(
+          json['driverLicenseNumber'] ??
+              json['driver_license_number'] ??
+              json['licenseNumber'],
+        ),
+        vehicleLicenseNumber: _stringFromAny(
+          json['vehicleLicenseNumber'] ??
+              json['vehicle_license_number'] ??
+              json['vehicleLicense'],
+        ),
       );
 
   String? id;
@@ -90,6 +130,13 @@ class UserModel {
   List<dynamic>? orderRequestData;
   String? reviewsCount;
   String? reviewsSum;
+  num? totalOrders;
+  num? acceptedOrders;
+  num? cancelledOrders;
+  num? acceptanceRateValue;
+  num? cancellationRateValue;
+  String? driverLicenseNumber;
+  String? vehicleLicenseNumber;
 
   String get fullName => '${firstName ?? ''} ${lastName ?? ''}'.trim();
   bool get isOnline => active == true;
@@ -98,6 +145,26 @@ class UserModel {
     final double count = double.tryParse(reviewsCount ?? '0') ?? 0.0;
     if (count <= 0) return 0.0;
     return sum / count;
+  }
+
+  double get acceptanceRate {
+    final explicit = acceptanceRateValue?.toDouble();
+    if (explicit != null) return _normalizePercent(explicit);
+
+    final total = totalOrders?.toDouble() ?? 0.0;
+    final accepted = acceptedOrders?.toDouble() ?? 0.0;
+    if (total <= 0) return 0.0;
+    return _normalizePercent((accepted / total) * 100);
+  }
+
+  double get cancellationRate {
+    final explicit = cancellationRateValue?.toDouble();
+    if (explicit != null) return _normalizePercent(explicit);
+
+    final total = totalOrders?.toDouble() ?? 0.0;
+    final cancelled = cancelledOrders?.toDouble() ?? 0.0;
+    if (total <= 0) return 0.0;
+    return _normalizePercent((cancelled / total) * 100);
   }
 
   Map<String, dynamic> toJson() => {
@@ -126,7 +193,33 @@ class UserModel {
         'orderRequestData': orderRequestData ?? [],
         'reviewsCount': reviewsCount,
         'reviewsSum': reviewsSum,
+        'totalOrders': totalOrders,
+        'acceptedOrders': acceptedOrders,
+        'cancelledOrders': cancelledOrders,
+        'acceptanceRate': acceptanceRateValue,
+        'cancellationRate': cancellationRateValue,
+        'driverLicenseNumber': driverLicenseNumber,
+        'vehicleLicenseNumber': vehicleLicenseNumber,
       };
+}
+
+num? _numFromAny(dynamic value) {
+  if (value == null) return null;
+  if (value is num) return value;
+  return num.tryParse(value.toString());
+}
+
+String? _stringFromAny(dynamic value) {
+  if (value == null) return null;
+  final text = value.toString().trim();
+  return text.isEmpty ? null : text;
+}
+
+double _normalizePercent(double value) {
+  if (value <= 1 && value >= 0) return value * 100;
+  if (value < 0) return 0;
+  if (value > 100) return 100;
+  return value;
 }
 
 /// موقع المستخدم الجغرافي

@@ -1,6 +1,6 @@
 import 'package:driver/app/modules/splash/controllers/splash_controller.dart';
-import 'package:driver/app/modules/splash/widgets/splash_background.dart';
-import 'package:driver/app/modules/splash/widgets/splash_content.dart';
+import 'package:driver/app/modules/splash/views/widgets/splash_background.dart';
+import 'package:driver/app/modules/splash/views/widgets/splash_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';

@@ -1,15 +1,22 @@
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:driver/app/data/models/order_event_model.dart';
 import 'package:driver/app/data/models/order_model.dart';
 import 'package:driver/app/data/models/user_model.dart';
+import 'package:driver/app/data/models/wallet_transaction_model.dart';
 import 'package:driver/core/constants/app_constants.dart';
 import 'package:driver/core/constants/collection_names.dart';
 import 'package:driver/core/utils/app_logger.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 /// Repository للعمليات المتعلقة بالطلبات
 /// يستخدم Firestore Transactions للعمليات الحساسة
 class OrderRepository {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
+
+  String? lastErrorMessage;
 
   // ── Queries ───────────────────────────────────────────────
 
@@ -81,6 +88,32 @@ class OrderRepository {
     return null;
   }
 
+  Future<String?> uploadOrderProofPhoto({
+    required String orderId,
+    required String driverId,
+    required String proofType,
+    required Uint8List bytes,
+    required String fileName,
+  }) async {
+    try {
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final safeFileName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+      final ref = _storage.ref().child(
+            'order_proofs/$orderId/$proofType/${driverId}_${timestamp}_$safeFileName',
+          );
+
+      final upload = await ref.putData(
+        bytes,
+        SettableMetadata(contentType: _contentTypeFromFileName(fileName)),
+      );
+
+      return upload.ref.getDownloadURL();
+    } catch (e) {
+      AppLogger.error('uploadOrderProofPhoto failed for $orderId', error: e);
+      return null;
+    }
+  }
+
   // ── Transactions ──────────────────────────────────────────
 
   /// قبول الطلب بشكل آمن باستخدام Firestore Transaction
@@ -89,12 +122,18 @@ class OrderRepository {
     required String orderId,
     required UserModel driver,
   }) async {
+    final driverId = driver.id;
+    if (driverId == null) {
+      lastErrorMessage = 'بيانات السائق غير مكتملة';
+      return false;
+    }
+
     final orderRef = _db.collection(CollectionNames.vendorOrders).doc(orderId);
-    final driverRef = _db.collection(CollectionNames.users).doc(driver.id);
+    final driverRef = _db.collection(CollectionNames.users).doc(driverId);
+    lastErrorMessage = null;
 
     try {
       return await _db.runTransaction<bool>((transaction) async {
-        // 1. قراءة الطلب الحالي
         final orderSnap = await transaction.get(orderRef);
         if (!orderSnap.exists) {
           throw Exception('الطلب غير موجود');
@@ -102,27 +141,48 @@ class OrderRepository {
 
         final data = orderSnap.data()!;
         final existingDriverId = data['driverID'];
+        final commissionAmount = _resolveDriverAppCommission(data);
+        final commissionRef = _db
+            .collection(CollectionNames.wallet)
+            .doc('commission_${orderId}_$driverId');
+        final driverSnap = await transaction.get(driverRef);
+        final commissionSnap =
+            commissionAmount > 0 ? await transaction.get(commissionRef) : null;
 
-        // 2. التحقق من عدم الحجز المسبق
-        if (existingDriverId != null && existingDriverId != driver.id) {
+        if (existingDriverId != null && existingDriverId != driverId) {
           throw Exception('تم قبول الطلب من مندوب آخر');
         }
 
-        // 3. التحقق من صلاحية الحالة
         final currentStatus = data['status'] as String?;
         if (currentStatus != AppConstants.statusOrderPlaced &&
             currentStatus != AppConstants.statusOffered) {
           throw Exception('الطلب لم يعد متاحاً');
         }
 
-        // 4. تحديث الطلب
+        if (!driverSnap.exists) {
+          throw Exception('بيانات السائق غير موجودة');
+        }
+
+        final currentBalance =
+            (driverSnap.data()?['wallet_amount'] as num?)?.toDouble() ?? 0.0;
+        if (commissionAmount > 0 && currentBalance < commissionAmount) {
+          throw Exception('رصيد المحفظة غير كاف لقبول الطلب');
+        }
+        if (commissionSnap?.exists == true) {
+          throw Exception('تم خصم عمولة هذا الطلب مسبقا');
+        }
+
         transaction.update(orderRef, {
           'status': AppConstants.statusDriverAccepted,
-          'driverID': driver.id,
+          'driverID': driverId,
           'driver': driver.toJson(),
+          'driver_app_commission_amount': commissionAmount,
+          if (commissionAmount > 0) ...{
+            'commission_wallet_transaction_id': commissionRef.id,
+            'commission_deducted_at': Timestamp.now(),
+          },
         });
 
-        // 5. تسجيل الحدث
         final eventRef =
             orderRef.collection(CollectionNames.orderEventsSubcollection).doc();
         transaction.set(
@@ -134,21 +194,41 @@ class OrderRepository {
             eventType: AppConstants.eventAccepted,
             previousStatus: currentStatus,
             nextStatus: AppConstants.statusDriverAccepted,
-            actorId: driver.id,
+            actorId: driverId,
             actorRole: 'driver',
+            metadata: {
+              'driver_app_commission_amount': commissionAmount,
+              if (commissionAmount > 0)
+                'wallet_transaction_id': commissionRef.id,
+            },
             createdAt: Timestamp.now(),
           ).toJson(),
         );
 
-        // 6. تحديث حالة السائق
+        if (commissionAmount > 0) {
+          final commission = WalletTransactionModel.commission(
+            driverId: driverId,
+            orderId: orderId,
+            amount: commissionAmount,
+          );
+          transaction.set(commissionRef, {
+            ...commission.toJson(),
+            'id': commissionRef.id,
+            'user_id': driverId,
+          });
+        }
+
         transaction.update(driverRef, {
           'inProgressOrderID': FieldValue.arrayUnion([orderId]),
           'orderRequestData': FieldValue.arrayRemove([orderId]),
+          if (commissionAmount > 0)
+            'wallet_amount': currentBalance - commissionAmount,
         });
 
         return true;
       });
     } catch (e) {
+      lastErrorMessage = _friendlyOrderError(e);
       AppLogger.error('acceptOrder failed for $orderId', error: e);
       return false;
     }
@@ -202,6 +282,8 @@ class OrderRepository {
     required List<String> allowedCurrentStatuses,
     required String eventType,
     String? note,
+    Map<String, dynamic>? orderUpdates,
+    Map<String, dynamic>? eventMetadata,
     bool clearFromActive = false,
   }) async {
     final orderRef = _db.collection(CollectionNames.vendorOrders).doc(orderId);
@@ -229,7 +311,10 @@ class OrderRepository {
         }
 
         // 3. تحديث حالة الطلب
-        transaction.update(orderRef, {'status': nextStatus});
+        transaction.update(orderRef, {
+          'status': nextStatus,
+          if (orderUpdates != null) ...orderUpdates,
+        });
 
         // 4. تسجيل الحدث
         final eventRef =
@@ -246,6 +331,7 @@ class OrderRepository {
             actorId: driverId,
             actorRole: 'driver',
             note: note,
+            metadata: eventMetadata,
             createdAt: Timestamp.now(),
           ).toJson(),
         );
@@ -263,5 +349,67 @@ class OrderRepository {
       AppLogger.error('updateOrderStatus failed for $orderId', error: e);
       return false;
     }
+  }
+
+  double _resolveDriverAppCommission(Map<String, dynamic> orderData) {
+    final explicit = _firstPositiveNumber(orderData, const [
+      'driver_app_commission',
+      'driverAppCommission',
+      'app_commission',
+      'appCommission',
+    ]);
+    if (explicit != null) return explicit;
+
+    final adminCommission =
+        double.tryParse('${orderData['adminCommission'] ?? 0}') ?? 0.0;
+    if (adminCommission <= 0) {
+      return AppConstants.defaultDriverAppCommission;
+    }
+
+    final type = '${orderData['adminCommissionType'] ?? ''}'.toLowerCase();
+    if (type == 'percentage') {
+      final subtotal = double.tryParse('${orderData['subTotal'] ?? 0}') ?? 0.0;
+      final discount = double.tryParse('${orderData['discount'] ?? 0}') ?? 0.0;
+      final base = subtotal - discount;
+      if (base <= 0) return 0;
+      return base * adminCommission / 100;
+    }
+
+    return adminCommission;
+  }
+
+  double? _firstPositiveNumber(
+    Map<String, dynamic> data,
+    List<String> keys,
+  ) {
+    for (final key in keys) {
+      final value = double.tryParse('${data[key] ?? ''}');
+      if (value != null && value > 0) return value;
+    }
+    return null;
+  }
+
+  String _contentTypeFromFileName(String fileName) {
+    final lower = fileName.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    return 'image/jpeg';
+  }
+
+  String _friendlyOrderError(Object error) {
+    final text = error.toString();
+    if (text.contains('رصيد') || text.contains('wallet')) {
+      return 'رصيد المحفظة غير كاف لقبول الطلب';
+    }
+    if (text.contains('عمولة') || text.contains('commission')) {
+      return 'تم خصم عمولة هذا الطلب مسبقا';
+    }
+    if (text.contains('آخر')) {
+      return 'تم قبول الطلب من سائق آخر';
+    }
+    if (text.contains('متاح')) {
+      return 'الطلب لم يعد متاحا';
+    }
+    return 'تعذر قبول الطلب';
   }
 }

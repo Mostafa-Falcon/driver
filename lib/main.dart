@@ -1,5 +1,6 @@
 import 'package:driver/app/routes/app_pages.dart';
 import 'package:driver/app/services/auth_service.dart';
+import 'package:driver/app/services/notification_alarm_service.dart';
 import 'package:driver/app/services/settings_service.dart';
 import 'package:driver/app/services/theme_service.dart';
 import 'package:driver/core/constants/app_strings.dart';
@@ -13,6 +14,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,13 +33,16 @@ Future<void> main() async {
         : const AppleAppAttestProvider(),
   );
 
-  await _registerServices();
+  final prefs = await SharedPreferences.getInstance();
+  final isDarkTheme = prefs.getBool('isDarkMode') ?? false;
+
+  await _registerServices(isDarkTheme);
   _configureEasyLoading();
 
   runApp(const DriverApp());
 }
 
-Future<void> _registerServices() async {
+Future<void> _registerServices(bool isDarkTheme) async {
   await Get.putAsync<SettingsService>(
     () async {
       final service = SettingsService();
@@ -48,7 +53,11 @@ Future<void> _registerServices() async {
   );
 
   Get.put<AuthService>(AuthService(), permanent: true);
-  Get.put<ThemeService>(ThemeService(), permanent: true);
+  Get.put<ThemeService>(ThemeService(isDarkTheme), permanent: true);
+  Get.put<NotificationAlarmService>(
+    NotificationAlarmService(),
+    permanent: true,
+  );
 }
 
 void _configureEasyLoading() {
@@ -79,7 +88,7 @@ class DriverApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light(),
           darkTheme: AppTheme.dark(),
-          themeMode: ThemeMode.light,
+          themeMode: ThemeService.to.isDark ? ThemeMode.dark : ThemeMode.light,
           initialRoute: AppPages.initial,
           getPages: AppPages.routes,
           defaultTransition: Transition.fadeIn,

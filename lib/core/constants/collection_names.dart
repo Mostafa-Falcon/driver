@@ -9,6 +9,7 @@ class CollectionNames {
   static const String wallet = 'wallet';
   static const String notifications = 'notifications';
   static const String supportTickets = 'support_tickets';
+  static const String walletRechargeRequests = 'wallet_recharge_requests';
   static const String settings = 'settings';
   static const String driverPayouts = 'driver_payouts';
   static const String withdrawMethod = 'withdraw_method';

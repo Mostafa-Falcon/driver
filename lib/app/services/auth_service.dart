@@ -65,7 +65,11 @@ class AuthService extends GetxService {
   }
 
   Future<UserModel?> _fetchUserProfile(String uid) async {
-    final doc = await _db.collection(CollectionNames.users).doc(uid).get();
+    final doc = await _db
+        .collection(CollectionNames.users)
+        .doc(uid)
+        .get()
+        .timeout(const Duration(seconds: 12));
     if (doc.exists && doc.data() != null) {
       return UserModel.fromJson({'id': doc.id, ...doc.data()!});
     }

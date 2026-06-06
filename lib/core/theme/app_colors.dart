@@ -8,9 +8,12 @@ class AppColors {
 
   // ── Surfaces ──────────────────────────────────────────────
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceDark = Color(0xFF010309);
-  static const Color backgroundLight = Color(0xFFF5F7F9);
-  static const Color backgroundDark = Color(0xFF0C111C);
+  static const Color surfaceDark =
+      Color(0xFF0E1624); // Obsidian/Navy dark surface
+  static const Color backgroundLight =
+      Color(0xFFF4F6F5); // Warm slate-green light background
+  static const Color backgroundDark =
+      Color(0xFF080C14); // Rich deep midnight slate dark background
 
   // ── Primary (Green) ───────────────────────────────────────
   static const Color primary50 = Color(0xFFEAFBF3);
@@ -34,14 +37,15 @@ class AppColors {
   static const Color grey900 = Color(0xFF0C111C);
 
   // ── Dark Grey Scale ───────────────────────────────────────
-  static const Color greyDark50 = Color(0xFF0C111C);
-  static const Color greyDark100 = Color(0xFF1F2937);
-  static const Color greyDark200 = Color(0xFF374151);
-  static const Color greyDark300 = Color(0xFF4B5563);
-  static const Color greyDark400 = Color(0xFF6B7280);
-  static const Color greyDark500 = Color(0xFF9CA3AF);
-  static const Color greyDark600 = Color(0xFFD1D5DB);
-  static const Color greyDark900 = Color(0xFFF9FAFB);
+  static const Color greyDark50 = Color(0xFF080C14); // Deep background match
+  static const Color greyDark100 =
+      Color(0xFF131F35); // Elevated cards background
+  static const Color greyDark200 = Color(0xFF1E2F4D); // Borders / dividers
+  static const Color greyDark300 = Color(0xFF2E456A); // Disabled inputs
+  static const Color greyDark400 = Color(0xFF47608A); // Secondary texts
+  static const Color greyDark500 = Color(0xFF7089B2); // Muted details
+  static const Color greyDark600 = Color(0xFF9FB0CE); // Subtitles / titles
+  static const Color greyDark900 = Color(0xFFF1F5F9); // Main bright text
 
   // ── Semantic Colors ───────────────────────────────────────
   static const Color success = Color(0xFF26B246);

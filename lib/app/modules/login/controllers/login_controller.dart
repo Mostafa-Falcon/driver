@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:driver/app/data/repositories/auth_repository.dart';
 import 'package:driver/app/routes/app_pages.dart';
 import 'package:driver/app/services/auth_service.dart';
+import 'package:driver/app/services/notification_alarm_service.dart';
 import 'package:driver/core/utils/toast_utils.dart';
 import 'package:driver/core/utils/validators.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -65,13 +68,17 @@ class LoginController extends GetxController {
 
     loading.value = true;
     try {
-      final credential = await action();
+      final credential = await action().timeout(const Duration(seconds: 25));
       if (credential.user == null) {
         ToastUtils.showError('لم يتم العثور على بيانات المستخدم.');
         return;
       }
 
       await _finishLogin(credential, signupType);
+    } on TimeoutException {
+      ToastUtils.showError(
+        'تسجيل الدخول أخذ وقت طويل. تحقق من الإنترنت وحاول مرة أخرى.',
+      );
     } on FirebaseAuthException catch (e) {
       ToastUtils.showError(_authErrorMessage(e));
     } catch (e) {
@@ -118,7 +125,13 @@ class LoginController extends GetxController {
     }
 
     ToastUtils.showSuccess('تم تسجيل الدخول بنجاح');
+    _syncNotificationToken();
     await Get.offAllNamed(AppRoutes.home);
+  }
+
+  void _syncNotificationToken() {
+    if (!Get.isRegistered<NotificationAlarmService>()) return;
+    unawaited(NotificationAlarmService.to.syncCurrentToken());
   }
 
   String _authErrorMessage(FirebaseAuthException e) {

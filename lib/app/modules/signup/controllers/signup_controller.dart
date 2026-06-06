@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:driver/app/data/models/user_model.dart';
 import 'package:driver/app/data/repositories/auth_repository.dart';
 import 'package:driver/app/data/repositories/user_repository.dart';
 import 'package:driver/app/routes/app_pages.dart';
 import 'package:driver/app/services/auth_service.dart';
+import 'package:driver/app/services/notification_alarm_service.dart';
 import 'package:driver/app/services/settings_service.dart';
 import 'package:driver/core/utils/toast_utils.dart';
 import 'package:driver/core/utils/validators.dart';
@@ -98,7 +101,12 @@ class SignupController extends GetxController {
 
       _authService.updateUserLocally(user);
       ToastUtils.showSuccess('تم إنشاء حساب السائق بنجاح');
+      _syncNotificationToken();
       await Get.offAllNamed(AppRoutes.home);
+    } on TimeoutException {
+      ToastUtils.showError(
+        'العملية أخذت وقت طويل. تحقق من الإنترنت وحاول مرة أخرى.',
+      );
     } on FirebaseAuthException catch (e) {
       ToastUtils.showError(_authErrorMessage(e));
     } catch (_) {
@@ -112,12 +120,19 @@ class SignupController extends GetxController {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (!isEmailSignup) return currentUser;
 
-    final credential = await _authRepository.createUserWithEmail(
-      email: emailController.text.trim().toLowerCase(),
-      password: passwordController.text.trim(),
-    );
+    final credential = await _authRepository
+        .createUserWithEmail(
+          email: emailController.text.trim().toLowerCase(),
+          password: passwordController.text.trim(),
+        )
+        .timeout(const Duration(seconds: 25));
 
     return credential.user;
+  }
+
+  void _syncNotificationToken() {
+    if (!Get.isRegistered<NotificationAlarmService>()) return;
+    unawaited(NotificationAlarmService.to.syncCurrentToken());
   }
 
   UserModel _buildUser(String uid) {

@@ -1,3 +1,4 @@
+import 'package:audioplayers/audioplayers.dart';
 import 'package:driver/app/data/models/order_model.dart';
 import 'package:driver/app/modules/order_details/controllers/order_details_controller.dart';
 import 'package:driver/core/constants/app_constants.dart';
@@ -27,6 +28,13 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
     return AppScaffold(
       title: 'تفاصيل الطلب',
       subtitle: 'متابعة الرحلة وتحديث حالتها',
+      actions: [
+        IconButton(
+          tooltip: 'الدعم',
+          onPressed: controller.openSupportForOrder,
+          icon: const Icon(Icons.support_agent_rounded),
+        ),
+      ],
       body: Obx(() {
         if (controller.isLoading.value) {
           return const LoadingWidget(message: 'جاري تحميل الطلب...');
@@ -52,6 +60,8 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
             _MoneyCard(order: order),
             SizedBox(height: 12.h),
             _NotesCard(order: order),
+            SizedBox(height: 12.h),
+            _ProofPhotosCard(order: order),
             SizedBox(height: 20.h),
             _ActionBar(order: order),
           ].animate(interval: 45.ms).fadeIn(duration: 220.ms).slideY(
@@ -207,11 +217,7 @@ class _NotesCard extends StatelessWidget {
           ),
           if (order.hasAudioNote) ...[
             SizedBox(height: 10.h),
-            _AttachmentLink(
-              label: 'فتح الملاحظة الصوتية',
-              value: order.audioNote!,
-              icon: Icons.graphic_eq_rounded,
-            ),
+            _InlineAudioPlayer(url: order.audioNote!),
           ],
           if (order.hasAttachments)
             ...List.generate(order.attachments!.length, (index) {
@@ -250,6 +256,254 @@ class _NotesCard extends StatelessWidget {
     }
 
     return '';
+  }
+}
+
+class _ProofPhotosCard extends StatelessWidget {
+  const _ProofPhotosCard({required this.order});
+
+  final OrderModel order;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SectionTitle(title: 'توثيق التوصيل'),
+          SizedBox(height: 10.h),
+          _ProofPhotoTile(
+            title: 'صورة الاستلام',
+            url: order.pickupPhotoUrl,
+            emptyText: 'ستظهر بعد تأكيد الاستلام',
+            icon: Icons.inventory_2_outlined,
+          ),
+          SizedBox(height: 10.h),
+          _ProofPhotoTile(
+            title: 'صورة التسليم',
+            url: order.deliveryPhotoUrl,
+            emptyText: 'ستظهر بعد إنهاء الطلب',
+            icon: Icons.check_circle_outline,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProofPhotoTile extends StatelessWidget {
+  const _ProofPhotoTile({
+    required this.title,
+    required this.url,
+    required this.emptyText,
+    required this.icon,
+  });
+
+  final String title;
+  final String? url;
+  final String emptyText;
+  final IconData icon;
+
+  bool get hasUrl => url != null && url!.trim().isNotEmpty;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(10.r),
+      decoration: BoxDecoration(
+        color: AppColors.grey50,
+        borderRadius: BorderRadius.circular(10.r),
+        border: Border.all(color: AppColors.grey100),
+      ),
+      child: Row(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8.r),
+            child: SizedBox.square(
+              dimension: 48.r,
+              child: hasUrl
+                  ? Image.network(url!, fit: BoxFit.cover)
+                  : DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: AppColors.grey100,
+                        borderRadius: BorderRadius.circular(8.r),
+                      ),
+                      child: Icon(icon, color: AppColors.grey400, size: 22.r),
+                    ),
+            ),
+          ),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: AppTextStyles.bodySemiBold()),
+                SizedBox(height: 3.h),
+                Text(
+                  hasUrl ? 'تم حفظ الصورة' : emptyText,
+                  style: AppTextStyles.caption(
+                    color: hasUrl ? AppColors.success : AppColors.grey500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (hasUrl)
+            IconButton(
+              tooltip: 'عرض الصورة',
+              onPressed: _open,
+              icon: const Icon(Icons.open_in_new_rounded),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _open() async {
+    final uri = Uri.tryParse(url ?? '');
+    if (uri == null || !uri.hasScheme) return;
+
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+}
+
+class _InlineAudioPlayer extends StatefulWidget {
+  const _InlineAudioPlayer({required this.url});
+
+  final String url;
+
+  @override
+  State<_InlineAudioPlayer> createState() => _InlineAudioPlayerState();
+}
+
+class _InlineAudioPlayerState extends State<_InlineAudioPlayer> {
+  final AudioPlayer _player = AudioPlayer();
+  Duration _duration = Duration.zero;
+  Duration _position = Duration.zero;
+  bool _isPlaying = false;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _player.onDurationChanged.listen((duration) {
+      if (mounted) setState(() => _duration = duration);
+    });
+    _player.onPositionChanged.listen((position) {
+      if (mounted) setState(() => _position = position);
+    });
+    _player.onPlayerStateChanged.listen((state) {
+      if (!mounted) return;
+      setState(() {
+        _isPlaying = state == PlayerState.playing;
+        if (state == PlayerState.playing || state == PlayerState.paused) {
+          _isLoading = false;
+        }
+      });
+    });
+    _player.onPlayerComplete.listen((_) {
+      if (!mounted) return;
+      setState(() {
+        _isPlaying = false;
+        _position = Duration.zero;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final durationMs = _duration.inMilliseconds;
+    final max = durationMs <= 0 ? 1.0 : durationMs.toDouble();
+    final value = durationMs <= 0
+        ? 0.0
+        : _position.inMilliseconds.clamp(0, durationMs).toDouble();
+
+    return Container(
+      padding: EdgeInsets.all(12.r),
+      decoration: BoxDecoration(
+        color: AppColors.primary50,
+        borderRadius: BorderRadius.circular(12.r),
+        border: Border.all(color: AppColors.primary100),
+      ),
+      child: Row(
+        children: [
+          IconButton.filled(
+            onPressed: _isLoading ? null : _toggle,
+            style: IconButton.styleFrom(backgroundColor: AppColors.primary),
+            icon: _isLoading
+                ? SizedBox.square(
+                    dimension: 18.r,
+                    child: const CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : Icon(
+                    _isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                    color: Colors.white,
+                  ),
+          ),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Column(
+              children: [
+                Slider(
+                  value: value,
+                  min: 0,
+                  max: max,
+                  activeColor: AppColors.primary,
+                  inactiveColor: AppColors.primary100,
+                  onChanged: durationMs <= 0
+                      ? null
+                      : (newValue) => _player.seek(
+                            Duration(milliseconds: newValue.round()),
+                          ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      _formatDuration(_position),
+                      style: AppTextStyles.caption(color: AppColors.grey500),
+                    ),
+                    Text(
+                      _formatDuration(_duration),
+                      style: AppTextStyles.caption(color: AppColors.grey500),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _toggle() async {
+    if (_isPlaying) {
+      await _player.pause();
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    if (_position > Duration.zero && _position < _duration) {
+      await _player.resume();
+    } else {
+      await _player.play(UrlSource(widget.url));
+    }
+  }
+
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
   }
 }
 

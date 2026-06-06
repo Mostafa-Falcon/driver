@@ -59,6 +59,37 @@ class _NewTicketTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       children: [
+        Obx(() {
+          final orderId = controller.linkedOrderId.value;
+          if (orderId == null) return const SizedBox.shrink();
+
+          return Padding(
+            padding: EdgeInsets.only(bottom: 12.h),
+            child: AppCard(
+              backgroundColor: AppColors.primary50,
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.receipt_long_outlined,
+                    color: AppColors.primary,
+                    size: 20.r,
+                  ),
+                  SizedBox(width: 10.w),
+                  Expanded(
+                    child: Text(
+                      'التذكرة مرتبطة بالطلب #$orderId',
+                      style: AppTextStyles.bodySemiBold(
+                        color: AppColors.primary500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
         const SectionTitle(
           title: 'سبب التواصل',
           subtitle: 'اختر أقرب سبب للمشكلة حتى يتم التعامل معها أسرع.',

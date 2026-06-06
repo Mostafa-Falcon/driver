@@ -1,15 +1,18 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:driver/app/data/models/driver_payout_model.dart';
 import 'package:driver/app/data/models/wallet_transaction_model.dart';
 import 'package:driver/core/constants/collection_names.dart';
 import 'package:driver/core/utils/app_logger.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 
 /// Repository للمحفظة المالية
 /// يضمن أمان جميع العمليات المالية عبر Transactions
 class WalletRepository {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   // ── Read ──────────────────────────────────────────────────
 
@@ -183,5 +186,60 @@ class WalletRepository {
       AppLogger.error('requestWithdrawal failed', error: e);
       return false;
     }
+  }
+
+  Future<String?> uploadRechargeReceipt({
+    required String driverId,
+    required Uint8List bytes,
+    required String fileName,
+  }) async {
+    try {
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final safeFileName = fileName.replaceAll(RegExp(r'[^a-zA-Z0-9._-]'), '_');
+      final ref = _storage.ref().child(
+            'wallet_recharge_requests/$driverId/${timestamp}_$safeFileName',
+          );
+
+      final upload = await ref.putData(
+        bytes,
+        SettableMetadata(contentType: _contentTypeFromFileName(fileName)),
+      );
+
+      return upload.ref.getDownloadURL();
+    } catch (e) {
+      AppLogger.error('uploadRechargeReceipt failed', error: e);
+      return null;
+    }
+  }
+
+  Future<bool> requestRecharge({
+    required String driverId,
+    required String transactionNumber,
+    required String receiptUrl,
+    String? note,
+  }) async {
+    try {
+      final ref = _db.collection(CollectionNames.walletRechargeRequests).doc();
+      await ref.set({
+        'id': ref.id,
+        'driver_id': driverId,
+        'transaction_number': transactionNumber,
+        'receipt_url': receiptUrl,
+        'status': 'pending',
+        'note': note,
+        'createdAt': Timestamp.now(),
+      });
+      return true;
+    } catch (e) {
+      AppLogger.error('requestRecharge failed', error: e);
+      return false;
+    }
+  }
+
+  String _contentTypeFromFileName(String fileName) {
+    final lower = fileName.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    return 'image/jpeg';
   }
 }

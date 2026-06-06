@@ -15,6 +15,7 @@ class SupportController extends GetxController {
   final TextEditingController messageController = TextEditingController();
   final RxString selectedReason = SupportRepository.defaultReasons.first.obs;
   final RxBool isSubmitting = false.obs;
+  final RxnString linkedOrderId = RxnString();
 
   final RxList<SupportTicketModel> myTickets = <SupportTicketModel>[].obs;
   final RxBool isLoadingTickets = true.obs;
@@ -26,7 +27,23 @@ class SupportController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _readArguments();
     _listenMyTickets();
+  }
+
+  void _readArguments() {
+    final args = Get.arguments;
+    if (args is! Map) return;
+
+    final orderId = args['orderId'];
+    if (orderId is String && orderId.trim().isNotEmpty) {
+      linkedOrderId.value = orderId.trim();
+    }
+
+    final reason = args['reason'];
+    if (reason is String && SupportRepository.defaultReasons.contains(reason)) {
+      selectedReason.value = reason;
+    }
   }
 
   void _listenMyTickets() {
@@ -58,6 +75,7 @@ class SupportController extends GetxController {
         driverId: driverId,
         reason: selectedReason.value,
         message: messageController.text.trim(),
+        orderId: linkedOrderId.value,
       ),
     );
     isSubmitting.value = false;

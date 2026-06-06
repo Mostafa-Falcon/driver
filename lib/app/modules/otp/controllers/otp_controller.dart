@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:driver/app/routes/app_pages.dart';
 import 'package:driver/app/services/auth_service.dart';
+import 'package:driver/app/services/notification_alarm_service.dart';
 import 'package:driver/core/utils/toast_utils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -48,8 +51,14 @@ class OtpController extends GetxController {
         verificationId: verificationId.value,
         smsCode: code,
       );
-      await _auth.signInWithCredential(credential);
+      await _auth
+          .signInWithCredential(credential)
+          .timeout(const Duration(seconds: 25));
       await _finishPhoneLogin();
+    } on TimeoutException {
+      ToastUtils.showError(
+        'التحقق أخذ وقت طويل. تحقق من الإنترنت وحاول مرة أخرى.',
+      );
     } on FirebaseAuthException catch (e) {
       ToastUtils.showError(_verificationErrorMessage(e));
     } catch (_) {
@@ -64,24 +73,31 @@ class OtpController extends GetxController {
 
     isResending.value = true;
     try {
-      await _auth.verifyPhoneNumber(
-        phoneNumber: '${countryCode.value}${phoneNumber.value}',
-        timeout: const Duration(seconds: 30),
-        forceResendingToken: resendToken.value,
-        verificationCompleted: (_) {},
-        verificationFailed: (error) {
-          ToastUtils.showError(_resendErrorMessage(error));
-          isResending.value = false;
-        },
-        codeSent: (newVerificationId, newResendToken) {
-          verificationId.value = newVerificationId;
-          resendToken.value = newResendToken;
-          ToastUtils.showSuccess('تم إرسال رمز جديد.');
-          isResending.value = false;
-        },
-        codeAutoRetrievalTimeout: (_) {
-          isResending.value = false;
-        },
+      await _auth
+          .verifyPhoneNumber(
+            phoneNumber: '${countryCode.value}${phoneNumber.value}',
+            timeout: const Duration(seconds: 30),
+            forceResendingToken: resendToken.value,
+            verificationCompleted: (_) {},
+            verificationFailed: (error) {
+              ToastUtils.showError(_resendErrorMessage(error));
+              isResending.value = false;
+            },
+            codeSent: (newVerificationId, newResendToken) {
+              verificationId.value = newVerificationId;
+              resendToken.value = newResendToken;
+              ToastUtils.showSuccess('تم إرسال رمز جديد.');
+              isResending.value = false;
+            },
+            codeAutoRetrievalTimeout: (_) {
+              isResending.value = false;
+            },
+          )
+          .timeout(const Duration(seconds: 35));
+    } on TimeoutException {
+      isResending.value = false;
+      ToastUtils.showError(
+        'إعادة إرسال الكود أخذت وقت طويل. حاول مرة أخرى.',
       );
     } catch (_) {
       isResending.value = false;
@@ -111,7 +127,13 @@ class OtpController extends GetxController {
     }
 
     ToastUtils.showSuccess('تم تسجيل الدخول بنجاح');
+    _syncNotificationToken();
     await Get.offAllNamed(AppRoutes.home);
+  }
+
+  void _syncNotificationToken() {
+    if (!Get.isRegistered<NotificationAlarmService>()) return;
+    unawaited(NotificationAlarmService.to.syncCurrentToken());
   }
 
   String _verificationErrorMessage(FirebaseAuthException error) {

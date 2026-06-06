@@ -8,28 +8,36 @@ class AppCard extends StatelessWidget {
     required this.child,
     this.padding,
     this.margin,
-    this.backgroundColor = Colors.white,
+    this.backgroundColor,
     this.onTap,
   });
 
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final EdgeInsetsGeometry? margin;
-  final Color backgroundColor;
+  final Color? backgroundColor;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final radius = 14.r;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final effectiveBg = backgroundColor ??
+        (isDark ? AppColors.greyDark100 : AppColors.surface);
+    final borderColor =
+        isDark ? AppColors.greyDark200 : AppColors.grey100;
+    final shadowColor = isDark
+        ? Colors.black.withValues(alpha: 0.25)
+        : AppColors.grey200.withValues(alpha: 0.55);
 
     final card = DecoratedBox(
       decoration: BoxDecoration(
-        color: backgroundColor,
+        color: effectiveBg,
         borderRadius: BorderRadius.circular(radius),
-        border: Border.all(color: AppColors.grey100),
+        border: Border.all(color: borderColor),
         boxShadow: [
           BoxShadow(
-            color: AppColors.grey200.withValues(alpha: 0.55),
+            color: shadowColor,
             blurRadius: 12.r,
             offset: Offset(0, 4.h),
           ),

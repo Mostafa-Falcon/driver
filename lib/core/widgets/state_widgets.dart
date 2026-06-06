@@ -9,38 +9,48 @@ class EmptyStateWidget extends StatelessWidget {
     required this.message,
     this.subMessage,
     this.icon,
+    this.iconWidget,
     this.action,
   });
 
   final String message;
   final String? subMessage;
   final IconData? icon;
+  final Widget? iconWidget;
   final Widget? action;
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Center(
       child: Padding(
         padding: EdgeInsets.all(32.r),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon ?? Icons.inbox_outlined,
-              size: 64.r,
-              color: AppColors.grey300,
-            ),
+            iconWidget ??
+                Icon(
+                  icon ?? Icons.inbox_outlined,
+                  size: 64.r,
+                  color: isDark ? AppColors.greyDark300 : AppColors.grey300,
+                ),
             SizedBox(height: 16.h),
             Text(
               message,
-              style: AppTextStyles.h3(color: AppColors.grey500),
+              style: AppTextStyles.h3(
+                  color: isDark ? AppColors.greyDark600 : AppColors.grey500,
+                  isDark: isDark,
+              ),
               textAlign: TextAlign.center,
             ),
             if (subMessage != null) ...[
               SizedBox(height: 8.h),
               Text(
                 subMessage!,
-                style: AppTextStyles.body(color: AppColors.grey400),
+                style: AppTextStyles.body(
+                    color: isDark ? AppColors.greyDark400 : AppColors.grey400,
+                    isDark: isDark,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],

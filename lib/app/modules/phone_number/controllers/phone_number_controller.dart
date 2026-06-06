@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:driver/app/routes/app_pages.dart';
 import 'package:driver/app/services/settings_service.dart';
 import 'package:driver/core/utils/toast_utils.dart';
@@ -37,29 +39,36 @@ class PhoneNumberController extends GetxController {
     final fullPhoneNumber = '$countryCode$phoneNumber';
 
     try {
-      await _auth.verifyPhoneNumber(
-        phoneNumber: fullPhoneNumber,
-        timeout: const Duration(seconds: 30),
-        verificationCompleted: (_) {},
-        verificationFailed: (error) {
-          isSending.value = false;
-          ToastUtils.showError(_phoneErrorMessage(error));
-        },
-        codeSent: (verificationId, resendToken) {
-          isSending.value = false;
-          Get.toNamed(
-            AppRoutes.otp,
-            arguments: {
-              'countryCode': countryCode,
-              'phoneNumber': phoneNumber,
-              'verificationId': verificationId,
-              'resendToken': resendToken,
+      await _auth
+          .verifyPhoneNumber(
+            phoneNumber: fullPhoneNumber,
+            timeout: const Duration(seconds: 30),
+            verificationCompleted: (_) {},
+            verificationFailed: (error) {
+              isSending.value = false;
+              ToastUtils.showError(_phoneErrorMessage(error));
             },
-          );
-        },
-        codeAutoRetrievalTimeout: (_) {
-          isSending.value = false;
-        },
+            codeSent: (verificationId, resendToken) {
+              isSending.value = false;
+              Get.toNamed(
+                AppRoutes.otp,
+                arguments: {
+                  'countryCode': countryCode,
+                  'phoneNumber': phoneNumber,
+                  'verificationId': verificationId,
+                  'resendToken': resendToken,
+                },
+              );
+            },
+            codeAutoRetrievalTimeout: (_) {
+              isSending.value = false;
+            },
+          )
+          .timeout(const Duration(seconds: 35));
+    } on TimeoutException {
+      isSending.value = false;
+      ToastUtils.showError(
+        'إرسال الكود أخذ وقت طويل. تحقق من الإنترنت وحاول مرة أخرى.',
       );
     } catch (_) {
       isSending.value = false;

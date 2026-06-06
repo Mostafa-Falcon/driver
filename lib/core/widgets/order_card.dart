@@ -28,6 +28,7 @@ class OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return AppCard(
       onTap: onTap,
       child: Column(
@@ -38,7 +39,7 @@ class OrderCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   '#${_shortId(order.id)}',
-                  style: AppTextStyles.bodySemiBold(),
+                  style: AppTextStyles.bodySemiBold(isDark: isDark),
                 ),
               ),
               StatusChip(status: order.status),

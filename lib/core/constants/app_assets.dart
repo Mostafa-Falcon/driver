@@ -13,4 +13,6 @@ class AppAssets {
   static const String userPlaceholder = 'assets/images/user_placeholder.png';
   static const String notificationBell =
       'assets/audio/mixkit-happy-bells-notification-937.mp3';
+  static const String notificationBellAudioPlayer =
+      'audio/mixkit-happy-bells-notification-937.mp3';
 }

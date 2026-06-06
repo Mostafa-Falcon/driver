@@ -31,7 +31,18 @@ class AppBrandMark extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(resolvedRadius),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.25),
+          width: 1.5,
+        ),
         boxShadow: [
+          // Premium Neon Glow
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.3),
+            blurRadius: resolvedSize * 0.25,
+            spreadRadius: 1.5.r,
+          ),
+          // Deep Drop Shadow
           BoxShadow(
             color: elevationColor.withValues(alpha: 0.18),
             blurRadius: resolvedSize * 0.2,

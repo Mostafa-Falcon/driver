@@ -7,7 +7,11 @@ class UserRepository {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   Future<UserModel?> getUser(String uid) async {
-    final doc = await _db.collection(CollectionNames.users).doc(uid).get();
+    final doc = await _db
+        .collection(CollectionNames.users)
+        .doc(uid)
+        .get()
+        .timeout(const Duration(seconds: 12));
     if (!doc.exists || doc.data() == null) return null;
 
     return UserModel.fromJson({'id': doc.id, ...doc.data()!});
@@ -20,7 +24,8 @@ class UserRepository {
       await _db
           .collection(CollectionNames.users)
           .doc(user.id)
-          .set(user.toJson(), SetOptions(merge: true));
+          .set(user.toJson(), SetOptions(merge: true))
+          .timeout(const Duration(seconds: 12));
       return true;
     } catch (e) {
       AppLogger.error('saveUser failed', error: e);

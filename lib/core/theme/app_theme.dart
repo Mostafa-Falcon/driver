@@ -85,6 +85,23 @@ class AppTheme {
         color: AppColors.grey200,
         thickness: 1,
       ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        titleTextStyle: AppTextStyles.bodySemiBold(),
+        contentTextStyle: AppTextStyles.body(),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+        ),
+      ),
       textTheme: TextTheme(
         bodyLarge: AppTextStyles.bodyLarge(),
         bodyMedium: AppTextStyles.body(),
@@ -111,6 +128,10 @@ class AppTheme {
         primary: AppColors.primary300,
         secondary: AppColors.primary,
         surface: AppColors.surfaceDark,
+        surfaceContainerHighest: AppColors.greyDark100,
+        onSurface: AppColors.greyDark900,
+        onSurfaceVariant: AppColors.greyDark600,
+        outline: AppColors.greyDark200,
         error: AppColors.danger,
       ),
       scaffoldBackgroundColor: AppColors.backgroundDark,
@@ -142,6 +163,17 @@ class AppTheme {
           elevation: 0,
         ),
       ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.primary300,
+          textStyle: AppTextStyles.button(color: AppColors.primary300),
+          minimumSize: Size(double.infinity, 52.h),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.r),
+          ),
+          side: const BorderSide(color: AppColors.primary300, width: 1.5),
+        ),
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.greyDark100,
@@ -164,6 +196,24 @@ class AppTheme {
       dividerTheme: const DividerThemeData(
         color: AppColors.greyDark200,
         thickness: 1,
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.greyDark100,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16.r),
+        ),
+        titleTextStyle: AppTextStyles.bodySemiBold(isDark: true),
+        contentTextStyle: AppTextStyles.body(isDark: true),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.greyDark100,
+        modalBarrierColor: Colors.black54,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(24),
+            topRight: Radius.circular(24),
+          ),
+        ),
       ),
       textTheme: TextTheme(
         bodyLarge: AppTextStyles.bodyLarge(isDark: true),
