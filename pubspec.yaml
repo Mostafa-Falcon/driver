@@ -1,0 +1,99 @@
+name: driver
+description: "تطبيق السائق - منظومة التوصيل"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # ── State Management ──────────────────────────────────────
+  get: ^4.7.3
+
+  # ── Firebase ──────────────────────────────────────────────
+  firebase_core: ^4.2.1
+  firebase_auth: ^6.1.2
+  cloud_firestore: ^6.1.0
+  firebase_messaging: ^16.0.4
+  firebase_database: ^12.1.0
+  firebase_storage: ^13.0.4
+  firebase_app_check: ^0.4.1+2
+
+  # ── Location & Maps (OSM - Free) ──────────────────────────
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
+  flutter_map: ^8.2.2
+  latlong2: ^0.9.1
+
+  # ── Responsive ────────────────────────────────────────────
+  flutter_screenutil: ^5.9.3
+
+  # ── UI Components ─────────────────────────────────────────
+  flutter_svg: ^2.2.3
+  cached_network_image: ^3.4.1
+  flutter_easyloading: ^3.0.5
+  pin_code_fields: ^9.4.0
+  dotted_border: ^3.1.0
+  timelines_plus: ^2.0.0
+  flutter_rating_bar: ^4.0.1
+  cupertino_icons: ^1.0.8
+
+  # ── Authentication ────────────────────────────────────────
+  google_sign_in: ^7.2.0
+  sign_in_with_apple: ^8.1.0
+  country_code_picker: ^3.4.1
+
+  # ── Storage & Utilities ───────────────────────────────────
+  shared_preferences: ^2.5.3
+  intl: ^0.20.2
+  uuid: ^4.5.2
+  image_picker: ^1.2.1
+  path_provider: ^2.1.5
+  path: ^1.9.1
+  url_launcher: ^6.3.2
+  crypto: ^3.0.7
+
+  # ── Notifications ─────────────────────────────────────────
+  flutter_local_notifications: ^21.0.0
+  googleapis_auth: ^2.0.0
+
+  # ── Audio ─────────────────────────────────────────────────
+  audioplayers: ^6.5.1
+
+  # Animation
+  flutter_animate: ^4.5.2
+
+dependency_overrides:
+  http: ^1.6.0
+  webview_flutter: ^4.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  fonts:
+    - family: Almarai
+      fonts:
+        - asset: assets/fonts/almarai-regular.ttf
+          weight: 400
+        - asset: assets/fonts/almarai-medium.ttf
+          weight: 500
+        - asset: assets/fonts/almarai-semi-bold.ttf
+          weight: 600
+        - asset: assets/fonts/almarai-bold.ttf
+          weight: 700
+
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/fonts/
+    - assets/audio/
+    - assets/

@@ -1,0 +1,33 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-raw-types: true
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - build/**
+
+linter:
+  rules:
+    # ── Style ─────────────────────────────────────────────
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    prefer_final_fields: true
+    prefer_final_locals: true
+    avoid_print: true
+    use_super_parameters: true
+
+    # ── Error Prevention ──────────────────────────────────
+    avoid_catching_errors: true
+    avoid_empty_else: true
+    cancel_subscriptions: true
+    close_sinks: true
+    unawaited_futures: true
+
+    # ── Clean Code ────────────────────────────────────────
+    always_declare_return_types: true
+    sort_constructors_first: true
+    prefer_single_quotes: true
+    require_trailing_commas: true
