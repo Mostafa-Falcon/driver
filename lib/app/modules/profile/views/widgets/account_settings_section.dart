@@ -1,11 +1,11 @@
 import 'package:driver/app/modules/profile/controllers/profile_controller.dart';
 import 'package:driver/app/modules/profile/views/widgets/profile_menu_item.dart';
+import 'package:driver/app/modules/profile/views/widgets/profile_section_card.dart';
 import 'package:driver/app/modules/profile/views/widgets/profile_sheets.dart';
 import 'package:driver/core/theme/app_colors.dart';
-import 'package:driver/core/widgets/reusables/reusable_text.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Trans;
 
 class AccountSettingsSection extends StatelessWidget {
   const AccountSettingsSection({super.key, required this.controller});
@@ -14,57 +14,31 @@ class AccountSettingsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final iconColor = Theme.of(context).brightness == Brightness.dark
+        ? AppColors.greyDark600
+        : AppColors.grey600;
+
+    return ProfileSectionCard(
+      title: 'profile.account_settings'.tr(),
       children: [
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 6.h),
-          child: const ReusableText.bodySemiBold(
-            text: 'إعدادات الحساب',
-            color: AppColors.grey500,
-          ),
+        ProfileMenuItem(
+          icon: Icons.person_outline_rounded,
+          title: 'profile.account'.tr(),
+          iconColor: iconColor,
+          onTap: () => _showMyAccountSheet(context),
         ),
-        Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardTheme.color,
-            borderRadius: BorderRadius.circular(16.r),
-            border: Border.all(
-              color: (Theme.of(context).dividerTheme.color ?? AppColors.grey200)
-                  .withValues(alpha: 0.5),
-              width: 1.2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.015),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              ProfileMenuItem(
-                icon: Icons.person_outline_rounded,
-                title: 'حسابي',
-                onTap: () => _showMyAccountSheet(context),
-              ),
-              ProfileMenuItem(
-                icon: Icons.lock_outline_rounded,
-                title: 'تغيير كلمة المرور',
-                iconColor: const Color(0xFFE28743),
-                iconBgColor: const Color(0xFFE28743).withValues(alpha: 0.08),
-                onTap: () => _showChangePasswordSheet(context),
-              ),
-              ProfileMenuItem(
-                icon: Icons.credit_card_rounded,
-                title: 'حساباتي المصرفية',
-                iconColor: const Color(0xFF7E57C2),
-                iconBgColor: const Color(0xFF7E57C2).withValues(alpha: 0.08),
-                showDivider: false,
-                onTap: () => _showBankAccountsSheet(context),
-              ),
-            ],
-          ),
+        ProfileMenuItem(
+          icon: Icons.lock_outline_rounded,
+          title: 'profile.change_password'.tr(),
+          iconColor: iconColor,
+          onTap: () => _showChangePasswordSheet(context),
+        ),
+        ProfileMenuItem(
+          icon: Icons.credit_card_rounded,
+          title: 'profile.bank_accounts'.tr(),
+          iconColor: iconColor,
+          showDivider: false,
+          onTap: () => _showBankAccountsSheet(context),
         ),
       ],
     );
@@ -72,7 +46,10 @@ class AccountSettingsSection extends StatelessWidget {
 
   void _showMyAccountSheet(BuildContext context) {
     Get.bottomSheet(
-      MyAccountSheet(driver: controller.auth.user),
+      MyAccountSheet(
+        controller: controller,
+        driver: controller.auth.user,
+      ),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
     );
@@ -88,7 +65,7 @@ class AccountSettingsSection extends StatelessWidget {
 
   void _showBankAccountsSheet(BuildContext context) {
     Get.bottomSheet(
-      const BankAccountsSheet(),
+      BankAccountsSheet(bankDetails: controller.auth.user?.userBankDetails),
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
     );

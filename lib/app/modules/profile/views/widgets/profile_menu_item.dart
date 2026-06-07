@@ -27,26 +27,28 @@ class ProfileMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final defaultIconColor = iconColor ?? AppColors.primary;
-    final defaultBgColor =
-        iconBgColor ?? AppColors.primary.withValues(alpha: 0.08);
+    final defaultBgColor = iconBgColor ??
+        (isDark ? AppColors.greyDark200 : Colors.white.withValues(alpha: 0.9));
+    final titleColor = isDark ? AppColors.greyDark900 : AppColors.grey800;
+    final subtitleColor = isDark ? AppColors.greyDark500 : AppColors.grey500;
 
     return Column(
       children: [
         InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(12.r),
+          borderRadius: BorderRadius.circular(14.r),
           child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 4.w, vertical: 12.h),
+            padding: EdgeInsetsDirectional.fromSTEB(12.w, 12.h, 12.w, 12.h),
             child: Row(
               children: [
-                // Right: Icon inside colored circle
                 Container(
-                  width: 38.r,
-                  height: 38.r,
+                  width: 34.r,
+                  height: 34.r,
                   decoration: BoxDecoration(
                     color: defaultBgColor,
-                    shape: BoxShape.circle,
+                    borderRadius: BorderRadius.circular(10.r),
                   ),
                   child: Icon(
                     icon,
@@ -55,7 +57,6 @@ class ProfileMenuItem extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: 14.w),
-                // Center: Title + optional subtitle
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,23 +64,27 @@ class ProfileMenuItem extends StatelessWidget {
                     children: [
                       ReusableText.bodySemiBold(
                         text: title,
+                        color: titleColor,
                         fontSize: 14.sp,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                       if (subtitle != null) ...[
                         SizedBox(height: 3.h),
                         ReusableText.caption(
                           text: subtitle!,
-                          color: AppColors.grey500,
+                          color: subtitleColor,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ],
                   ),
                 ),
-                // Left: Trailing widget (chevron, text, switch)
                 trailing ??
                     Icon(
                       Icons.chevron_left_rounded,
-                      color: AppColors.grey400,
+                      color: isDark ? AppColors.greyDark500 : AppColors.grey500,
                       size: 20.r,
                     ),
               ],
@@ -87,11 +92,15 @@ class ProfileMenuItem extends StatelessWidget {
           ),
         ),
         if (showDivider)
-          Divider(
-            height: 1,
-            thickness: 0.8,
-            color: Theme.of(context).dividerTheme.color,
-            indent: 52.w, // aligned with text start
+          Padding(
+            padding: EdgeInsetsDirectional.only(start: 60.w),
+            child: Divider(
+              height: 1,
+              thickness: 0.9,
+              color: isDark
+                  ? AppColors.greyDark200.withValues(alpha: 0.7)
+                  : Colors.white.withValues(alpha: 0.95),
+            ),
           ),
       ],
     );

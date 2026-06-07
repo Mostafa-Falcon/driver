@@ -3,6 +3,7 @@ class AppStrings {
 
   static const appTitle = 'تطبيق السائق';
   static const deliverySystem = 'منظومة التوصيل';
+  static const fallbackAppVersion = '1.0.0';
 
   static const undefined = 'غير محدد';
   static const driver = 'السائق';

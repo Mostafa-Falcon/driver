@@ -2,9 +2,10 @@ import 'dart:ui';
 import 'package:driver/app/routes/app_pages.dart';
 import 'package:driver/core/theme/app_colors.dart';
 import 'package:driver/core/theme/app_text_styles.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Trans;
 
 class AppScaffold extends StatelessWidget {
   const AppScaffold({
@@ -56,8 +57,7 @@ class AppScaffold extends StatelessWidget {
                   Text(
                     title!,
                     style: AppTextStyles.h3(
-                      isDark:
-                          Theme.of(context).brightness == Brightness.dark,
+                      isDark: Theme.of(context).brightness == Brightness.dark,
                     ),
                   ),
                   if (subtitle != null) ...[
@@ -65,9 +65,8 @@ class AppScaffold extends StatelessWidget {
                     Text(
                       subtitle!,
                       style: AppTextStyles.caption(
-                          color: AppColors.grey500,
-                          isDark: Theme.of(context).brightness ==
-                              Brightness.dark,
+                        color: AppColors.grey500,
+                        isDark: Theme.of(context).brightness == Brightness.dark,
                       ),
                     ),
                   ],
@@ -100,19 +99,19 @@ class _CustomBottomNavBar extends StatelessWidget {
       (
         icon: Icons.local_shipping_outlined,
         activeIcon: Icons.local_shipping,
-        label: 'طلباتي',
+        label: 'nav.orders'.tr(),
         route: AppRoutes.home,
       ),
       (
         icon: Icons.account_balance_wallet_outlined,
         activeIcon: Icons.account_balance_wallet,
-        label: 'المحفظة',
+        label: 'nav.wallet'.tr(),
         route: AppRoutes.wallet,
       ),
       (
         icon: Icons.person_outline_rounded,
         activeIcon: Icons.person_rounded,
-        label: 'حسابي',
+        label: 'nav.account'.tr(),
         route: AppRoutes.editProfile,
       ),
     ];

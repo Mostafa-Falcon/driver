@@ -4,19 +4,18 @@ import 'package:driver/app/modules/wallet/views/widgets/wallet_balance_card.dart
 import 'package:driver/app/modules/wallet/views/widgets/withdrawal_bottom_sheet.dart';
 import 'package:driver/app/modules/wallet/views/widgets/transactions_list.dart';
 import 'package:driver/app/modules/wallet/views/widgets/withdrawals_list.dart';
-import 'package:driver/app/modules/home/views/widgets/header.dart';
 import 'package:driver/app/routes/app_pages.dart';
-import 'package:driver/core/constants/app_assets.dart';
 import 'package:driver/core/theme/app_colors.dart';
 import 'package:driver/core/widgets/app_scaffold.dart';
 import 'package:driver/core/widgets/app_tab_bar.dart';
+import 'package:driver/core/widgets/driver_header.dart';
 import 'package:driver/core/widgets/reusables/reusable_text.dart';
 import 'package:driver/core/widgets/state_widgets.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Trans;
 
 class WalletView extends GetView<WalletController> {
   const WalletView({super.key});
@@ -29,33 +28,14 @@ class WalletView extends GetView<WalletController> {
       body: Obx(
         () => ListView(
           children: [
-            HeaderWidgets(
-              userIcon: ClipOval(
-                child: controller.driver?.profilePictureURL != null &&
-                        controller.driver!.profilePictureURL!.startsWith('http')
-                    ? CachedNetworkImage(
-                        imageUrl: controller.driver!.profilePictureURL!,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Image.asset(
-                          AppAssets.userPlaceholder,
-                          fit: BoxFit.cover,
-                        ),
-                        errorWidget: (context, url, error) => Image.asset(
-                          AppAssets.userPlaceholder,
-                          fit: BoxFit.cover,
-                        ),
-                      )
-                    : Image.asset(
-                        AppAssets.userPlaceholder,
-                        fit: BoxFit.cover,
-                      ),
-              ),
-              username: controller.driver?.fullName ?? 'السائق',
-              userActivetion: controller.driver?.isDocumentVerify == true
-                  ? 'حساب مفعل'
-                  : 'قيد التفعيل',
+            DriverHeader(
+              profilePictureUrl: controller.driver?.profilePictureURL,
+              username: controller.driver?.fullName.isNotEmpty == true
+                  ? controller.driver!.fullName
+                  : 'driver.default_name'.tr(),
+              isVerified: controller.driver?.isDocumentVerify == true,
               isOnline: controller.isOnline.value,
-              onTapIsOnline: controller.toggleOnlineStatus,
+              onToggleOnline: controller.toggleOnlineStatus,
               notificationCount: controller.unreadNotificationsCount.value,
               onTapNotification: () => Get.toNamed(AppRoutes.notifications),
             ),

@@ -66,6 +66,8 @@ dependencies:
 
   # Animation
   flutter_animate: ^4.5.2
+  easy_localization: ^3.0.8
+  package_info_plus: ^10.1.0
 
 dependency_overrides:
   http: ^1.6.0
@@ -110,6 +112,7 @@ flutter:
           weight: 900
 
   assets:
+    - assets/translations/
     - assets/images/
     - assets/icons/
     - assets/fonts/

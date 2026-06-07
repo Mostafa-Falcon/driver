@@ -12,9 +12,13 @@ class NotificationsController extends GetxController {
   final AuthService _auth = AuthService.to;
 
   final RxBool isLoading = true.obs;
+  final RxBool isMarkingAllRead = false.obs;
   final RxList<NotificationModel> notifications = <NotificationModel>[].obs;
 
   StreamSubscription<List<NotificationModel>>? _notificationsSub;
+
+  int get unreadCount =>
+      notifications.where((item) => item.isRead != true).length;
 
   @override
   void onInit() {
@@ -46,6 +50,24 @@ class NotificationsController extends GetxController {
     final id = notification.id;
     if (id == null || notification.isRead == true) return;
     await _notificationRepository.markAsRead(id);
+  }
+
+  Future<void> markAllAsRead() async {
+    if (isMarkingAllRead.value) return;
+
+    final ids = notifications
+        .where((item) => item.isRead != true)
+        .map((item) => item.id)
+        .whereType<String>()
+        .toList();
+    if (ids.isEmpty) return;
+
+    isMarkingAllRead.value = true;
+    try {
+      await _notificationRepository.markAllAsRead(ids);
+    } finally {
+      isMarkingAllRead.value = false;
+    }
   }
 
   @override

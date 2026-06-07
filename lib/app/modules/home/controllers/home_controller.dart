@@ -10,7 +10,8 @@ import 'package:driver/app/services/auth_service.dart';
 import 'package:driver/app/services/notification_alarm_service.dart';
 import 'package:driver/core/utils/app_logger.dart';
 import 'package:driver/core/utils/toast_utils.dart';
-import 'package:get/get.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:get/get.dart' hide Trans;
 
 class HomeController extends GetxController {
   final OrderRepository _orderRepository = OrderRepository();
@@ -100,6 +101,11 @@ class HomeController extends GetxController {
     update();
   }
 
+  void selectTab(int index) {
+    if (index == currentTab.value) return;
+    currentTab.value = index;
+  }
+
   Future<void> acceptOrder(OrderModel order) async {
     if (order.id == null || driver == null) return;
 
@@ -152,6 +158,7 @@ class HomeController extends GetxController {
     final alarmService = _alarmService;
     if (hasNewOrder && isOnline.value && alarmService != null) {
       unawaited(alarmService.playNewOrderAlarm());
+      ToastUtils.showToast('home.new_order_alert'.tr());
     }
   }
 

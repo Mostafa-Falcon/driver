@@ -1,11 +1,13 @@
 import 'package:driver/app/routes/app_pages.dart';
 import 'package:driver/app/services/auth_service.dart';
+import 'package:driver/app/services/localization_service.dart';
 import 'package:driver/app/services/notification_alarm_service.dart';
 import 'package:driver/app/services/settings_service.dart';
 import 'package:driver/app/services/theme_service.dart';
 import 'package:driver/core/constants/app_strings.dart';
 import 'package:driver/core/theme/app_theme.dart';
 import 'package:driver/firebase_options.dart';
+import 'package:easy_localization/easy_localization.dart' as easy;
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
@@ -18,6 +20,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await easy.EasyLocalization.ensureInitialized();
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   await Firebase.initializeApp(
@@ -35,11 +38,26 @@ Future<void> main() async {
 
   final prefs = await SharedPreferences.getInstance();
   final isDarkTheme = prefs.getBool('isDarkMode') ?? false;
+  final savedLocale = prefs.getString('locale')?.split('_').first;
+  final startLocale = savedLocale == null
+      ? LocalizationService.fallbackLocale
+      : LocalizationService.languageFromCode(savedLocale).locale;
 
   await _registerServices(isDarkTheme);
   _configureEasyLoading();
 
-  runApp(const DriverApp());
+  runApp(
+    easy.EasyLocalization(
+      supportedLocales: LocalizationService.supportedLocales,
+      path: LocalizationService.translationsPath,
+      fallbackLocale: LocalizationService.fallbackLocale,
+      startLocale: startLocale,
+      useOnlyLangCode: true,
+      useFallbackTranslations: true,
+      useFallbackTranslationsForEmptyResources: true,
+      child: const DriverApp(),
+    ),
+  );
 }
 
 Future<void> _registerServices(bool isDarkTheme) async {
@@ -86,6 +104,10 @@ class DriverApp extends StatelessWidget {
         return GetMaterialApp(
           title: AppStrings.appTitle,
           debugShowCheckedModeBanner: false,
+          localizationsDelegates: LocalizationService.delegates(context),
+          supportedLocales:
+              LocalizationService.contextSupportedLocales(context),
+          locale: LocalizationService.currentLocale(context),
           theme: AppTheme.light(),
           darkTheme: AppTheme.dark(),
           themeMode: ThemeService.to.isDark ? ThemeMode.dark : ThemeMode.light,
@@ -94,7 +116,11 @@ class DriverApp extends StatelessWidget {
           defaultTransition: Transition.fadeIn,
           builder: EasyLoading.init(
             builder: (context, child) => Directionality(
-              textDirection: TextDirection.rtl,
+              textDirection:
+                  LocalizationService.currentLocale(context).languageCode ==
+                          'ar'
+                      ? TextDirection.rtl
+                      : TextDirection.ltr,
               child: child ?? const SizedBox.shrink(),
             ),
           ),

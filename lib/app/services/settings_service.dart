@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:driver/core/utils/app_logger.dart';
 import 'package:driver/core/constants/app_strings.dart';
 import 'package:get/get.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 /// خدمة إعدادات التطبيق العامة من Firestore
 /// تُحمَّل مرة واحدة عند بدء التطبيق
@@ -20,12 +21,25 @@ class SettingsService extends GetxService {
   bool currencySymbolAtRight = false;
   int currencyDecimalDigits = 2;
   String appVersion = '';
+  String packageVersion = AppStrings.fallbackAppVersion;
+  String get effectiveAppVersion =>
+      appVersion.trim().isNotEmpty ? appVersion.trim() : packageVersion;
 
   // ── Lifecycle ─────────────────────────────────────────────
   @override
   Future<void> onInit() async {
     super.onInit();
+    await _loadPackageVersion();
     await loadSettings();
+  }
+
+  Future<void> _loadPackageVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      packageVersion = info.version;
+    } catch (e) {
+      AppLogger.error('load package version failed', error: e);
+    }
   }
 
   Future<void> loadSettings() async {
